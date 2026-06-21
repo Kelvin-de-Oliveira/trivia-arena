@@ -189,7 +189,7 @@ enum RoomStatus {
 
 | RPC | Validação obrigatória | Status gRPC em erro |
 |---|---|---|
-| `CreateRoom` | entre 2 e 10; `num_questions` entre 5 e 20; `theme` deve ser um dos valores válidos; shard do `theme` deve estar disponível | `INVALID_ARGUMENT` / `UNAVAILABLE` |
+| `CreateRoom` | `max_players` entre 2 e 10; `num_questions` entre 5 e 20; `theme` deve ser um dos valores válidos; shard do `theme` deve estar disponível | `INVALID_ARGUMENT` / `UNAVAILABLE` |
 | `JoinRoom` | Sala deve existir e estar em `WAITING`; não atingiu `max_players` | `NOT_FOUND` / `FAILED_PRECONDITION` |
 | `StartGame` | `requester_id` deve ser o `creator_id` da sala; sala em `WAITING`; mínimo 2 jogadores | `PERMISSION_DENIED` / `FAILED_PRECONDITION` |
 | `RestartGame` | `requester_id` deve ser o `creator_id`; sala em `FINISHED`; shard do `new_theme` deve estar disponível | `PERMISSION_DENIED` / `FAILED_PRECONDITION` / `UNAVAILABLE` |
