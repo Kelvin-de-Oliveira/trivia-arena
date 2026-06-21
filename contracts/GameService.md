@@ -157,14 +157,14 @@ enum RoomStatus {
 
 | RPC | Validação obrigatória | Status gRPC em erro |
 |---|---|---|
-| `CreateRoom` | `max_players` entre 2 e 10; `num_questions` entre 5 e 20; `theme` deve ser um dos valores válidos | `INVALID_ARGUMENT` |
+| `CreateRoom` | entre 2 e 10; `num_questions` entre 5 e 20; `theme` deve ser um dos valores válidos; shard do `theme` deve estar disponível | `INVALID_ARGUMENT` / `UNAVAILABLE` |
 | `JoinRoom` | Sala deve existir e estar em `WAITING`; não atingiu `max_players` | `NOT_FOUND` / `FAILED_PRECONDITION` |
 | `StartGame` | `requester_id` deve ser o `creator_id` da sala; sala em `WAITING`; mínimo 2 jogadores | `PERMISSION_DENIED` / `FAILED_PRECONDITION` |
-| `RestartGame` | `requester_id` deve ser o `creator_id`; sala em `FINISHED`; shard do `new_theme` deve estar disponível | `PERMISSION_DENIED` / `FAILED_PRECONDITION` |
+| `RestartGame` | `requester_id` deve ser o `creator_id`; sala em `FINISHED`; shard do `new_theme` deve estar disponível | `PERMISSION_DENIED` / `FAILED_PRECONDITION` / `UNAVAILABLE` |
 | `GetRoom` | Sala deve existir no Redis | `NOT_FOUND` |
  
 > **Nota sobre `GetRoom`:** este RPC existe para que o API Gateway possa servir o endpoint REST `GET /rooms/{roomCode}` sem acessar o Redis diretamente. O Game Service é o único componente que lê e escreve no Redis,  o Gateway não deve conhecer o schema interno das chaves. A implementação do `GetRoom` no Game Service lê `room:{code}:state` e `room:{code}:players` e mapeia para `GetRoomResponse`, sem lógica de negócio adicional. 
-> **Nota sobre `RestartGameGetRoomResponse`** Exige um passo de sanitização atômica sobre room:{code}:players, zerando todos os valores antes de liberar a abertura de uma nova partida.
+> **Nota sobre `RestartGame`** Exige um passo de sanitização atômica sobre room:{code}:players, zerando todos os valores antes de liberar a abertura de uma nova partida.
  
 ### 2.3 Garantia de integridade de identidade do jogador
 
