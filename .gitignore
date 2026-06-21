@@ -1,5 +1,6 @@
 # ─── Perguntas geradas (não commitar) ────────────────────────────────────────
 questions/
+fetch_questions.py
 
 # ─── Variáveis de ambiente ────────────────────────────────────────────────────
 .env
