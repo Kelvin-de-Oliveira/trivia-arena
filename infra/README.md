@@ -1,11 +1,15 @@
-# Infraestrutura Local — Desenvolvimento - Game Service
-> **Versão:** 1.2
-> 
-> **Responsável pelo componente:** kelvin
-> 
-> **Obs:** Essa versão de infra atende apenas ao desenvolvimento do componente Game Service!!
-> 
+# Infraestrutura Local — TriviaArena
+
+> **Versão:** 2.0
+>
+> **Responsável:** Kelvin
+>
+> Esta infraestrutura atende ao desenvolvimento de todos os componentes do sistema: Game Service, User Service e API Gateway.
+
+---
+
 ## Pré-requisitos
+
 - Docker
 - Docker Compose
 
@@ -19,9 +23,11 @@ trivia-infra/
     ├── shard-a/
     │   ├── 01_schema.sql
     │   └── 02_seed.sql
-    └── shard-b/
-        ├── 01_schema.sql
-        └── 02_seed.sql
+    ├── shard-b/
+    │   ├── 01_schema.sql
+    │   └── 02_seed.sql
+    └── userdb/
+        └── 01_schema.sql
 ```
 
 ## Como subir
@@ -37,8 +43,10 @@ docker-compose up -d
 |---|---|---|
 | Redis | 6379 | Game state cache |
 | Redis Commander | 8091 | UI web para inspeção das chaves do Redis |
-| db-shard-a | 5432 | Shard A do Question DB |
-| db-shard-b | 5433 | Shard B do Question DB |
+| db-shard-a | 5432 | Question DB — Shard A |
+| db-shard-b | 5433 | Question DB — Shard B |
+| db-user-primary | 5434 | User DB — instância primária (escrita) |
+| db-user-replica | 5435 | User DB — instância réplica (leitura) |
 | Kafka | 9092 | Broker (acesso externo via host) |
 | Kafka UI | 8090 | UI web para inspeção de tópicos e mensagens |
 
@@ -68,19 +76,20 @@ Permite inspecionar tópicos, partições e mensagens. Útil para validar:
 
 - Tópico `game-finished` — eventos publicados ao fim de cada partida
 
-## Dados de teste
-
-Cada tema possui 5 perguntas em `pt-BR` — suficiente para cobrir
-o mínimo de `num_questions` (5) em uma partida.
-
-## Acesso aos shards via psql
+## Acesso aos bancos via psql
 
 ```bash
-# Shard A
+# Question DB — Shard A
 docker exec -it trivia-db-shard-a psql -U trivia -d questions_shard_a
 
-# Shard B
+# Question DB — Shard B
 docker exec -it trivia-db-shard-b psql -U trivia -d questions_shard_b
+
+# User DB — Primário
+docker exec -it trivia-db-user-primary psql -U trivia -d trivia_users
+
+# User DB — Réplica
+docker exec -it trivia-db-user-replica psql -U trivia -d trivia_users
 ```
 
 ## Parar os serviços
@@ -93,15 +102,15 @@ docker-compose down -v    # remove volumes (dados apagados)
 ---
 
 ## Testando a interface gRPC sem o API Gateway
- 
+
 Durante o desenvolvimento do Game Service, o API Gateway não está disponível no compose local. Para chamar os RPCs diretamente e validar o comportamento, use uma das opções abaixo.
- 
+
 ### grpcurl (linha de comando)
- 
+
 Instale o grpcurl: https://github.com/fullstorydev/grpcurl#installation
- 
+
 O Game Service deve estar rodando localmente na porta `9090`. Os exemplos abaixo cobrem o fluxo completo de uma partida.
- 
+
 **Criar sala:**
 ```bash
 grpcurl -plaintext \
@@ -115,7 +124,7 @@ grpcurl -plaintext \
   }' \
   localhost:9090 trivia.game.v1.GameService/CreateRoom
 ```
- 
+
 **Entrar na sala (segundo jogador):**
 ```bash
 grpcurl -plaintext \
@@ -127,14 +136,14 @@ grpcurl -plaintext \
   }' \
   localhost:9090 trivia.game.v1.GameService/JoinRoom
 ```
- 
+
 **Consultar estado da sala:**
 ```bash
 grpcurl -plaintext \
   -d '{"room_code": "XXXXX"}' \
   localhost:9090 trivia.game.v1.GameService/GetRoom
 ```
- 
+
 **Iniciar partida (apenas o criador pode):**
 ```bash
 grpcurl -plaintext \
@@ -144,7 +153,7 @@ grpcurl -plaintext \
   }' \
   localhost:9090 trivia.game.v1.GameService/StartGame
 ```
- 
+
 **Reiniciar partida com novo tema:**
 ```bash
 grpcurl -plaintext \
@@ -155,86 +164,86 @@ grpcurl -plaintext \
   }' \
   localhost:9090 trivia.game.v1.GameService/RestartGame
 ```
- 
+
 > Substitua `XXXXX` pelo `room_code` retornado no `CreateRoom`.
- 
+
 **Listar todos os RPCs disponíveis (requer reflection ativa no serviço):**
 ```bash
 grpcurl -plaintext localhost:9090 list trivia.game.v1.GameService
 ```
- 
+
 ---
- 
+
 ### Postman (interface gráfica)
- 
+
 O Postman suporta gRPC nativamente a partir da versão 10.
- 
+
 1. Abra o Postman e crie uma nova requisição do tipo **gRPC**
 2. Informe o endereço: `localhost:9090`
 3. Importe o arquivo `.proto` em **Import a .proto file** (use o arquivo `game_service.proto` do repositório do Game Service)
 4. Selecione o método desejado (ex: `CreateRoom`) e preencha o body em JSON
 5. Clique em **Invoke**
+
 ---
- 
-### Opção C — Kreya (alternativa gráfica leve)
- 
+
+### Kreya (alternativa gráfica leve)
+
 Download: https://kreya.app
- 
-Kreya é uma ferramenta dedicada a gRPC, mais leve que o Postman para esse propósito.
- 
+
 1. Crie um novo projeto e importe o `.proto`
 2. Configure o endpoint `localhost:9090` (plaintext, sem TLS)
 3. Execute os RPCs diretamente pela interface
+
 ---
 
 ### Testando o WebSocket (respostas durante a partida)
- 
+
 Após iniciar uma partida via gRPC, conecte-se ao WebSocket para simular um jogador respondendo. Use o **websocat** (linha de comando) ou o **Postman**.
- 
+
 **Instalar websocat:** https://github.com/vi/websocat#installation
- 
+
 ```bash
 # Conectar como jogador (STOMP sobre WebSocket)
 websocat ws://localhost:8080/ws
 ```
- 
+
 Após conectar, envie o frame STOMP de CONNECT:
 ```
 CONNECT
 player-id:player-001
 room-code:XXXXX
 accept-version:1.2
- 
+
 ^@
 ```
- 
+
 Inscreva-se no tópico da sala:
 ```
 SUBSCRIBE
 id:sub-0
 destination:/topic/rooms/XXXXX
- 
+
 ^@
 ```
- 
+
 Envie uma resposta:
 ```
 SEND
 destination:/app/rooms/XXXXX/answer
 content-type:application/json
- 
+
 {"type":"answer","question_id":"uuid-da-pergunta","option":"b"}
 ^@
 ```
- 
+
 > `^@` representa o caractere nulo (null byte), delimitador de frame STOMP. No websocat, pressione `Ctrl+@` ou envie `\0`.
- 
+
 ---
- 
+
 ### Validando os efeitos colaterais
- 
+
 Após executar os RPCs, confirme os efeitos esperados nas ferramentas de debug:
- 
+
 | O que verificar | Onde |
 |---|---|
 | Chaves `room:{code}:state` e `room:{code}:players` criadas | Redis Commander — http://localhost:8091 |
@@ -246,55 +255,57 @@ Após executar os RPCs, confirme os efeitos esperados nas ferramentas de debug:
 ## Conflito de portas com serviços locais
 
 As portas abaixo são padrão de seus respectivos serviços. Se você tiver qualquer um deles rodando localmente (instalação nativa, não Docker), o `docker-compose up` vai falhar com `bind: address already in use`.
- 
+
 | Porta | Serviço no compose | Conflito comum |
 |---|---|---|
 | `5432` | db-shard-a | PostgreSQL instalado localmente |
 | `5433` | db-shard-b | Outro PostgreSQL local na porta 5433 |
+| `5434` | db-user-primary | Outro PostgreSQL local na porta 5434 |
+| `5435` | db-user-replica | Outro PostgreSQL local na porta 5435 |
 | `6379` | Redis | Redis instalado localmente |
 | `9092` | Kafka | Kafka local |
- 
+
 **Solução rápida — parar os serviços locais antes de subir o compose:**
- 
+
 ```bash
 # macOS / Linux — parar PostgreSQL
 brew services stop postgresql   # Homebrew
 sudo systemctl stop postgresql  # systemd
- 
+
 # macOS / Linux — parar Redis
 brew services stop redis
 sudo systemctl stop redis
 ```
- 
+
 **Solução alternativa — mudar as portas do host no docker-compose.yml:**
- 
-Se preferir manter os serviços locais rodando, altere apenas o lado esquerdo do mapeamento de portas (host:container). O Game Service usa as variáveis do `.env`, então basta atualizar os valores lá também.
- 
+
+Se preferir manter os serviços locais rodando, altere apenas o lado esquerdo do mapeamento de portas (host:container). Basta atualizar os valores correspondentes no `.env` também.
+
 ```yaml
-# Exemplo: mover shard-a para a porta 5434 no host
+# Exemplo: mover shard-a para a porta 5436 no host
 db-shard-a:
   ports:
-    - "5434:5432"   # era 5432:5432
+    - "5436:5432"   # era 5432:5432
 ```
- 
+
 ```env
 # .env — atualizar a porta correspondente
-DB_SHARD_A_PORT=5434
+DB_SHARD_A_PORT=5436
 ```
- 
+
 ---
 
 ## Dados de teste — limitação e como expandir
- 
+
 O seed atual possui **5 perguntas por tema**. Isso cobre apenas partidas com `num_questions = 5` (o mínimo). Para testar com valores maiores, adicione mais perguntas diretamente no banco:
- 
+
 ```bash
 # Acessar o shard desejado
 docker exec -it trivia-db-shard-a psql -U trivia -d questions_shard_a
- 
+
 # Inserir novas perguntas
 INSERT INTO questions (theme, language, text, option_a, option_b, option_c, option_d, correct_option)
 VALUES ('science', 'pt-BR', 'Sua pergunta aqui?', 'Op A', 'Op B', 'Op C', 'Op D', 'b');
 ```
- 
+
 Para temas do Shard B, substitua `trivia-db-shard-a` por `trivia-db-shard-b` e `questions_shard_a` por `questions_shard_b`. Recomenda-se ter no mínimo **20 perguntas por tema** para cobrir o limite máximo de `num_questions`.
