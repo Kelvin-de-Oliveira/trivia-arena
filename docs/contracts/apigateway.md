@@ -1,6 +1,6 @@
 # Contrato de Integração — API Gateway
 
-> **Versão:** 1.0
+> **Versão:** 1.1
 > 
 > **Responsável pelo componente:** Kelvin
 > 
@@ -12,7 +12,7 @@
 
 O API Gateway é o **único componente cujo contrato é, por natureza, definido em função dos outros dois**: a interface externa (REST/WebSocket) já está especificada no contrato do **SPA Web Client**, e a interface interna com o jogo já está especificada no contrato do **Game Service**. Este documento, portanto, não repete o que já foi acordado — ele especifica a **tradução** entre as duas pontas: validação de JWT, roteamento, mapeamento de campos e conversão de códigos de erro.
 
-A interface com o **User Service** ainda não tem contrato próprio publicado. A seção 5 propõe uma interface gRPC inferida a partir das responsabilidades descritas no documento de escopo e dos campos já confirmados no contrato do Frontend (`/auth/register`, `/auth/login`, `/users/me`, `/users/me/stats`). Está marcada como **proposta — pendente de validação cruzada** quando o contrato real do User Service for publicado.
+A interface com o **User Service** está especificada na seção 5 e foi validada contra o contrato formal do User Service (versão 1.0).
 
 ---
 
@@ -32,7 +32,7 @@ A interface com o **User Service** ainda não tem contrato próprio publicado. A
     - [3.3 Garantia repassada aos serviços internos](#33-garantia-repassada-aos-serviços-internos)
   - [4. Roteamento REST → Backend](#4-roteamento-rest--backend)
     - [4.1 Mapeamento de campos REST ↔ gRPC (Game Service)](#41-mapeamento-de-campos-rest--grpc-game-service)
-  - [5. Interface gRPC — API Gateway → User Service (proposta)](#5-interface-grpc--api-gateway--user-service-proposta)
+  - [5. Interface gRPC — API Gateway → User Service](#5-interface-grpc--api-gateway--user-service)
     - [5.1 Arquivo `.proto` proposto](#51-arquivo-proto-proposto)
     - [5.2 Validações e códigos de erro gRPC propostos](#52-validações-e-códigos-de-erro-grpc-propostos)
     - [5.3 Responsabilidade do Gateway nesta interface](#53-responsabilidade-do-gateway-nesta-interface)
@@ -151,9 +151,7 @@ A única transformação de fato realizada pelo Gateway nesse sentido é a verif
 
 ---
 
-## 5. Interface gRPC — API Gateway → User Service (proposta)
-
->**Esta seção é uma proposta!!!**, construída a partir do documento de escopo (seção 3.4) e dos campos já confirmados no contrato do Frontend. Deve ser validada/substituída quando o contrato formal do User Service existir.
+## 5. Interface gRPC — API Gateway → User Service
 
 - **Porta:** `9090` (mesma porta gRPC padrão usada pelo Game Service, em host distinto)
 - **Protocolo:** gRPC / Protocol Buffers
@@ -227,7 +225,7 @@ message GetUserStatsResponse {
 ### 5.3 Responsabilidade do Gateway nesta interface
 
 - Em `RegisterUser`/`LoginUser`: o Gateway recebe `user_id` e `name` do User Service, **assina o JWT** (seção 2) e devolve `{ "jwt": "...", "user_id": "..." }` ao cliente — exatamente o formato já especificado no contrato do Frontend (4.1/4.2).
-- Em `UpdateUser`/`GetUserStats`: o Gateway já validou o JWT antes de chegar aqui (rotas exigem autenticação) e usa o `sub` da claim como `user_id` da chamada gRPC — o cliente nunca informa `user_id` diretamente nessas duas rotas.
+- Em `UpdateUser`/`GetUserStats`: o Gateway já validou o JWT antes de chegar aqui (rotas exigem autenticação) e usa o `sub` da claim como `user_id` da chamada gRPC  o cliente nunca informa `user_id` diretamente nessas duas rotas.
 
 ---
 
