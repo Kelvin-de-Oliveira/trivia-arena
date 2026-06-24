@@ -1,0 +1,1 @@
+"""Configuração e utilitários transversais do API Gateway."""
