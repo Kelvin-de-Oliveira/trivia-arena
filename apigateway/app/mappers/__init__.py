@@ -1,0 +1,1 @@
+"""Tradução canônica de erros gRPC → HTTP."""

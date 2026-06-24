@@ -1,0 +1,1 @@
+"""Camada de apresentação REST e WebSocket."""

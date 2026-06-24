@@ -1,0 +1,1 @@
+"""Adaptadores gRPC para Game Service e User Service."""

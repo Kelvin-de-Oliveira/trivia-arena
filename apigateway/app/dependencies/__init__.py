@@ -1,0 +1,1 @@
+"""Dependências FastAPI: auth JWT e clientes gRPC."""

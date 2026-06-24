@@ -1,0 +1,1 @@
+"""DTOs Pydantic para entrada e saída REST."""

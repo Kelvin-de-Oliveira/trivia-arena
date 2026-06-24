@@ -1,0 +1,1 @@
+"""Proxy WebSocket cliente ↔ Game Service."""

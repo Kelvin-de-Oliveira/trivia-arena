@@ -1,0 +1,1 @@
+"""Routers FastAPI para as rotas REST."""

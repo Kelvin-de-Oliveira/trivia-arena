@@ -1,0 +1,1 @@
+"""Hierarquia de exceções de domínio do Gateway."""
