@@ -1,0 +1,103 @@
+// Contrato gRPC - Game Service
+// Fonte: Contrato de Integração Game Service §2.1 (versão 1.2)
+// Campos player_id / creator_id / requester_id chegam já verificados
+// pelo Gateway 
+
+syntax = "proto3";
+
+package trivia.game.v1;
+
+option java_package = "com.trivia.game.grpc";
+option java_outer_classname = "GameServiceProto";
+
+service GameService {
+  rpc CreateRoom  (CreateRoomRequest)  returns (CreateRoomResponse);
+  rpc JoinRoom    (JoinRoomRequest)    returns (JoinRoomResponse);
+  rpc StartGame   (StartGameRequest)   returns (StartGameResponse);
+  rpc RestartGame (RestartGameRequest) returns (StartGameResponse);
+  rpc GetRoom     (GetRoomRequest)     returns (GetRoomResponse);
+}
+
+// ── Criação de sala ───────────────────────────────────────────────────────
+
+message CreateRoomRequest {
+  string creator_id    = 1;
+  string creator_name  = 2;
+  bool   is_anonymous  = 3;
+  int32  max_players   = 4;  
+  int32  num_questions = 5;  
+  string theme         = 6;  
+}
+
+message CreateRoomResponse {
+  string room_code = 1;
+}
+
+// ── Entrada na sala ───────────────────────────────────────────────────────
+
+message JoinRoomRequest {
+  string room_code    = 1;
+  string player_id    = 2;
+  string player_name  = 3;
+  bool   is_anonymous = 4;
+}
+
+message JoinRoomResponse {
+  repeated Player players      = 1;
+  RoomStatus      status       = 2;
+  string          theme        = 3;
+  int32           max_players  = 4;
+  string          creator_id   = 5;
+  int32           num_questions = 6;
+}
+
+// ── Início e reinício de partida ──────────────────────────────────────────
+
+message StartGameRequest {
+  string room_code    = 1;
+  string requester_id = 2;  // deve ser o creator_id da sala 
+}
+
+message StartGameResponse {
+  bool started = 1;
+}
+
+message RestartGameRequest {
+  string room_code    = 1;
+  string requester_id = 2;  // deve ser o creator_id da sala 
+  string new_theme    = 3;
+}
+
+// ── Consulta de sala ──────────────────────────────────────────────────────
+
+// Existe para que o Gateway sirva GET /rooms/{code} sem acessar o
+// Redis diretamente. O Game Service lê room:{code}:state e
+// room:{code}:players e mapeia para esta resposta
+message GetRoomRequest {
+  string room_code = 1;
+}
+
+message GetRoomResponse {
+  string          room_code     = 1;
+  RoomStatus      status        = 2;
+  string          theme         = 3;
+  int32           max_players   = 4;
+  int32           num_questions = 5;
+  repeated Player players       = 6;
+  string          creator_id    = 7;
+}
+
+// ── Tipos compartilhados ──────────────────────────────────────────────────
+
+message Player {
+  string player_id   = 1;
+  string player_name = 2;
+  bool   is_anonymous = 3;
+  int32  score        = 4;
+}
+
+enum RoomStatus {
+  WAITING     = 0;
+  IN_PROGRESS = 1;
+  FINISHED    = 2;
+}
