@@ -17,8 +17,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.security import decode_jwt
 from app.exceptions import UnauthenticatedError
 
-# auto_error=False impede que o FastAPI devolva 403 automático quando o
-# header Authorization está ausente — o controle fica nos próprios Depends.
+
 _bearer = HTTPBearer(auto_error=False)
 
 
