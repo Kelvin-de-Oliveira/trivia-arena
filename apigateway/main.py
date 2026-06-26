@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.clients.channel_factory import close_channels, open_channels
 from app.middleware.error_handler import register_exception_handlers
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -22,8 +23,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         settings.game_grpc_address,
         settings.user_grpc_address,
     )
-
-    yield  
+    await open_channels()
+    yield
+    await close_channels()
     logger.info("API Gateway encerrando.")
 
 app = FastAPI(
