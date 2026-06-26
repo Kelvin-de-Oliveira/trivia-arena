@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9090}
+    reflection-service-enabled: true
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+game:
+  question-timeout-ms: ${GAME_QUESTION_TIMEOUT_MS:30000}
+  room-ttl-seconds: ${GAME_ROOM_TTL_SECONDS:3600}
+  leader-lease-ms: ${GAME_LEADER_LEASE_MS:10000}
+  recovery-scan-ms: ${GAME_RECOVERY_SCAN_MS:1000}
+  datasource:
+    shard-a:
+      jdbc-url: jdbc:postgresql://${DB_SHARD_A_HOST:localhost}:${DB_SHARD_A_PORT:5432}/${DB_SHARD_A_NAME:questions_shard_a}
+      username: ${DB_SHARD_A_USER:trivia}
+      password: ${DB_SHARD_A_PASS:trivia}
+    shard-b:
+      jdbc-url: jdbc:postgresql://${DB_SHARD_B_HOST:localhost}:${DB_SHARD_B_PORT:5433}/${DB_SHARD_B_NAME:questions_shard_b}
+      username: ${DB_SHARD_B_USER:trivia}
+      password: ${DB_SHARD_B_PASS:trivia}
+
