@@ -36,6 +36,8 @@ message JoinRoomResponse {
   RoomStatus status = 2;
   string theme = 3;
   int32 max_players = 4;
+  string creator_id = 5;
+  int32 num_questions = 6;
 }
 
 message StartGameRequest { string room_code = 1; string requester_id = 2; }
@@ -50,6 +52,7 @@ message GetRoomResponse {
   int32 max_players = 4;
   int32 num_questions = 5;
   repeated Player players = 6;
+  string creator_id = 7;
 }
 
 message Player {

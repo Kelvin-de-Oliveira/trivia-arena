@@ -27,9 +27,9 @@ game:
     shard-a:
       jdbc-url: jdbc:postgresql://${DB_SHARD_A_HOST:localhost}:${DB_SHARD_A_PORT:5432}/${DB_SHARD_A_NAME:questions_shard_a}
       username: ${DB_SHARD_A_USER:trivia}
-      password: ${DB_SHARD_A_PASS:trivia}
+      password: ${DB_SHARD_A_PASS:admin}
     shard-b:
       jdbc-url: jdbc:postgresql://${DB_SHARD_B_HOST:localhost}:${DB_SHARD_B_PORT:5433}/${DB_SHARD_B_NAME:questions_shard_b}
       username: ${DB_SHARD_B_USER:trivia}
-      password: ${DB_SHARD_B_PASS:trivia}
+      password: ${DB_SHARD_B_PASS:admin}
 

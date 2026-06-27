@@ -17,6 +17,7 @@ import com.trivia.game.infra.kafka.GameFinishedPublisher;
 import com.trivia.game.infra.questions.QuestionRepository;
 import com.trivia.game.infra.questions.ShardUnavailableException;
 import com.trivia.game.infra.redis.RoomRedisRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class GameCoordinator {
@@ -52,8 +52,6 @@ public class GameCoordinator {
 
     private final ConcurrentHashMap<String, LeaseTasks> leadership = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Map<UUID, Question>> questionCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, ConcurrentHashMap<String, Instant>> localCorrectAnswers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, AtomicInteger> localCorrectAnswerCounts = new ConcurrentHashMap<>();
 
     public GameCoordinator(
             RoomRedisRepository rooms,
@@ -61,7 +59,7 @@ public class GameCoordinator {
             RoomEventBus events,
             GameFinishedPublisher finishedPublisher,
             GameProperties properties,
-            TaskScheduler scheduler,
+            @Qualifier("gameTaskScheduler") TaskScheduler scheduler,
             Clock clock
     ) {
         this.rooms = rooms;
@@ -84,7 +82,7 @@ public class GameCoordinator {
         }
         Theme theme = Theme.from(themeValue);
         if (!questions.isAvailable(theme)) {
-            throw GameException.precondition("Shard do tema indisponível");
+            throw GameException.unavailable("Shard do tema indisponivel");
         }
 
         PlayerMeta creator = new PlayerMeta(creatorId, creatorName, anonymous);
@@ -106,11 +104,7 @@ public class GameCoordinator {
             case NOT_WAITING -> throw GameException.precondition("Sala não está aguardando jogadores");
             case ROOM_FULL -> throw GameException.precondition("Sala atingiu o limite de jogadores");
             case JOINED, ALREADY_JOINED -> {
-                RoomSnapshot room = rooms.getRoom(roomCode);
-                if (result == RoomRedisRepository.JoinResult.JOINED) {
-                    events.broadcast(roomCode, playerJoinedEvent(playerId, playerName, room.players()));
-                }
-                return room;
+                return rooms.getRoom(roomCode);
             }
         }
         throw new IllegalStateException("Resultado de entrada inesperado");
@@ -132,10 +126,33 @@ public class GameCoordinator {
         return rooms.findRoom(roomCode).map(room -> room.isParticipant(playerId)).orElse(false);
     }
 
+    public void playerSubscribed(String roomCode, String playerId) {
+        RoomSnapshot room = rooms.findRoom(roomCode).orElse(null);
+        if (room == null) {
+            events.sendPrivate(playerId, roomCode, errorEvent("ROOM_NOT_FOUND", "Sala nao encontrada"));
+            return;
+        }
+        PlayerScore player = room.players().stream()
+                .filter(candidate -> candidate.playerId().equals(playerId))
+                .findFirst()
+                .orElse(null);
+        if (player == null) {
+            return;
+        }
+        events.broadcast(roomCode, playerJoinedEvent(player.playerId(), player.playerName(), room.players()));
+        if (room.status() == RoomStatus.FINISHED) {
+            events.broadcast(roomCode, gameOverEvent(ranking(room.players())));
+        }
+    }
+
     public void playerConnected(String roomCode, String playerId) {
         RoomSnapshot room = rooms.findRoom(roomCode).orElse(null);
         if (room == null) {
             events.sendPrivate(playerId, roomCode, errorEvent("ROOM_NOT_FOUND", "Sala não encontrada"));
+            return;
+        }
+        if (room.status() == RoomStatus.FINISHED) {
+            events.sendPrivate(playerId, roomCode, gameOverEvent(ranking(room.players())));
             return;
         }
         if (room.status() != RoomStatus.IN_PROGRESS || room.roundDeadline() == null || room.runId() == null) {
@@ -172,11 +189,7 @@ public class GameCoordinator {
         if (!question.isCorrect(answer.option())) {
             return;
         }
-        if (rooms.recordCorrectAnswer(roomCode, room.currentQuestionIdx(), playerId, receivedAt, properties.roomTtlSeconds())) {
-            String roundKey = roundKey(room);
-            localCorrectAnswers.computeIfAbsent(roundKey, ignored -> new ConcurrentHashMap<>()).put(playerId, receivedAt);
-            localCorrectAnswerCounts.computeIfAbsent(roundKey, ignored -> new AtomicInteger()).incrementAndGet();
-        }
+        rooms.recordCorrectAnswer(roomCode, room.currentQuestionIdx(), playerId, receivedAt, properties.roomTtlSeconds());
     }
 
     @Scheduled(fixedDelayString = "${game.recovery-scan-ms:1000}")
@@ -200,7 +213,7 @@ public class GameCoordinator {
         try {
             selected = questions.randomQuestions(theme, before.numQuestions());
         } catch (ShardUnavailableException exception) {
-            throw GameException.precondition("Shard do tema indisponível");
+            throw GameException.unavailable("Shard do tema indisponivel");
         }
         if (selected.size() != before.numQuestions()) {
             throw GameException.precondition("Não há perguntas suficientes para iniciar a partida");
@@ -295,8 +308,6 @@ public class GameCoordinator {
         Instant nextDeadline = Instant.now(clock).plusMillis(properties.questionTimeoutMs());
         RoomSnapshot after = rooms.applyRound(roomCode, before, credits, nextDeadline, properties.roomTtlSeconds());
         events.broadcast(roomCode, roundResultEvent(answeredQuestion, credits, after.players()));
-        localCorrectAnswers.remove(roundKey(before));
-        localCorrectAnswerCounts.remove(roundKey(before));
 
         if (after.status() == RoomStatus.FINISHED) {
             List<RankedPlayer> ranking = ranking(after.players());
@@ -406,7 +417,7 @@ public class GameCoordinator {
     }
 
     private GameFinishedEvent finishedEvent(RoomSnapshot room, List<RankedPlayer> ranking) {
-        return new GameFinishedEvent(room.roomCode(), Instant.now(clock), room.theme().value(), ranking.stream()
+        return new GameFinishedEvent(room.roomCode(), Instant.now(clock), room.theme().value(), room.numQuestions(), ranking.stream()
                 .map(player -> new GameFinishedEvent.Result(player.playerId(), player.playerName(), player.anonymous(),
                         player.totalScore(), player.position(), player.position() == 1))
                 .toList());
@@ -432,10 +443,6 @@ public class GameCoordinator {
 
     private String cacheKey(RoomSnapshot room) {
         return room.roomCode() + ":" + room.runId();
-    }
-
-    private String roundKey(RoomSnapshot room) {
-        return cacheKey(room) + ":" + room.currentQuestionIdx();
     }
 
     private static void requireText(String value, String message) {
