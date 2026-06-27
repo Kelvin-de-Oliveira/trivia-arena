@@ -8,6 +8,8 @@ from app.clients.channel_factory import close_channels, open_channels
 from app.middleware.error_handler import register_exception_handlers
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.api.rest import auth
+from app.api.rest import rooms
 
 
 setup_logging()
@@ -36,6 +38,9 @@ app = FastAPI(
 )
 
 register_exception_handlers(app)
+
+app.include_router(auth.router)
+app.include_router(rooms.router)
 
 @app.get("/health", tags=["infra"])
 async def health_check() -> dict:

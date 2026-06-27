@@ -47,6 +47,8 @@ public class GameGrpcService extends GameServiceGrpc.GameServiceImplBase {
                     .setStatus(status(room))
                     .setTheme(room.theme().value())
                     .setMaxPlayers(room.maxPlayers())
+                    .setCreatorId(room.creatorId())
+                    .setNumQuestions(room.numQuestions())
                     .build();
         });
     }
@@ -76,6 +78,7 @@ public class GameGrpcService extends GameServiceGrpc.GameServiceImplBase {
                     .setMaxPlayers(room.maxPlayers())
                     .setNumQuestions(room.numQuestions())
                     .addAllPlayers(room.players().stream().map(this::player).toList())
+                    .setCreatorId(room.creatorId())
                     .build();
         });
     }

@@ -29,5 +29,9 @@ public class GameException extends RuntimeException {
     public static GameException precondition(String message) {
         return new GameException(Status.FAILED_PRECONDITION, message);
     }
+
+    public static GameException unavailable(String message) {
+        return new GameException(Status.UNAVAILABLE, message);
+    }
 }
 

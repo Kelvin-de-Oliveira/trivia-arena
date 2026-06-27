@@ -1,6 +1,7 @@
 package com.trivia.game.transport.ws;
 
 import com.trivia.game.application.GameCoordinator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -19,7 +20,7 @@ public class StompSessionTracker {
     private final GameCoordinator games;
     private final ConcurrentHashMap<String, PlayerSession> sessions = new ConcurrentHashMap<>();
 
-    public StompSessionTracker(GameCoordinator games) {
+    public StompSessionTracker(@Lazy GameCoordinator games) {
         this.games = games;
     }
 
@@ -52,6 +53,10 @@ public class StompSessionTracker {
             return;
         }
         String destination = accessor.getDestination();
+        if (("/topic/rooms/" + session.roomCode()).equals(destination)) {
+            games.playerSubscribed(session.roomCode(), session.playerId());
+            return;
+        }
         if (("/user/queue/rooms/" + session.roomCode()).equals(destination)) {
             games.playerConnected(session.roomCode(), session.playerId());
         }
