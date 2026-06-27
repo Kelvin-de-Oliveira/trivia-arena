@@ -125,7 +125,7 @@ class TestCreateRoomEndpoint:
         client = TestClient(build_test_app(mock, jwt_user_id=FAKE_USER_ID), raise_server_exceptions=False)
         r = client.post("/rooms", json=self._body(creator_id=OTHER_USER_ID))
         assert r.status_code == 403
-        assert r.json()["error"] == "PLAYER_ID_MISMATCH"
+        assert r.json()["error"] == "PERMISSION_DENIED"
         mock.create_room.assert_not_awaited()
 
     def test_anonymous_valid_id_returns_201(self):
@@ -209,7 +209,7 @@ class TestJoinRoomEndpoint:
         assert r.status_code == 403
         # ensure_identity levanta PermissionDeniedError genérico (não PlayerIdMismatchError).
         # Se isso mudar no identity_guard, este teste deve falhar e avisar a mudança de contrato.
-        assert r.json()["error"] == "PLAYER_ID_MISMATCH"
+        assert r.json()["error"] == "PERMISSION_DENIED"
         mock.join_room.assert_not_awaited()
 
     def test_anonymous_invalid_id_format_returns_400(self):
@@ -286,7 +286,7 @@ class TestStartGameEndpoint:
         client = TestClient(build_test_app(mock, jwt_user_id=FAKE_USER_ID), raise_server_exceptions=False)
         r = client.post(f"/rooms/{FAKE_ROOM_CODE}/start", json={"requester_id": OTHER_USER_ID})
         assert r.status_code == 403
-        assert r.json()["error"] == "PLAYER_ID_MISMATCH"
+        assert r.json()["error"] == "PERMISSION_DENIED"
         mock.start_game.assert_not_awaited()
 
     def test_non_creator_rejected_by_game_service_returns_403(self):
@@ -337,7 +337,7 @@ class TestRestartGameEndpoint:
             json={"requester_id": OTHER_USER_ID, "new_theme": Theme.history.value},
         )
         assert r.status_code == 403
-        assert r.json()["error"] == "PLAYER_ID_MISMATCH"
+        assert r.json()["error"] == "PERMISSION_DENIED"
         mock.restart_game.assert_not_awaited()
 
     def test_room_not_finished_returns_409(self):
