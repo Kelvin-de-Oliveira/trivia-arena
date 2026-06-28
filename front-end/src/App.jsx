@@ -7,8 +7,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
-import CreateRoom from './pages/CreateRoom';
-import Room from './pages/Room';
+//  CreateRoom from './pages/CreateRoom';
+// import Room from './pages/Room';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -30,8 +30,8 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            <Route path="/room/create" element={<CreateRoom />} />
-            <Route path="/room/:roomCode" element={<Room />} />
+            {/*<Route path="/room/create" element={<CreateRoom />} />*/}
+             {/*<Route path="/room/:roomCode" element={<Room />} />*/}
             
             <Route 
               path="/profile" 

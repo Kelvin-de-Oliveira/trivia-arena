@@ -1,0 +1,21 @@
+{
+  "players": [
+    {
+      "player_id": "anon:0eadb8f0-ffda-432a-a7a0-17fb8a6acb25",
+      "player_name": "bruno",
+      "is_anonymous": true,
+      "score": 0
+    },
+    {
+      "player_id": "b2007272-3e4f-4df5-87b5-815880aac5f0",
+      "player_name": "alice_aec08b",
+      "is_anonymous": false,
+      "score": 0
+    }
+  ],
+  "status": "WAITING",
+  "theme": "science",
+  "max_players": 2,
+  "creator_id": "b2007272-3e4f-4df5-87b5-815880aac5f0",
+  "num_questions": 5
+}

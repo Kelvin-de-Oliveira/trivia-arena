@@ -1,0 +1,16 @@
+{
+  "room_code": "K8CL5S",
+  "status": "WAITING",
+  "theme": "science",
+  "max_players": 2,
+  "num_questions": 5,
+  "players": [
+    {
+      "player_id": "b2007272-3e4f-4df5-87b5-815880aac5f0",
+      "player_name": "alice_aec08b",
+      "is_anonymous": false,
+      "score": 0
+    }
+  ],
+  "creator_id": "b2007272-3e4f-4df5-87b5-815880aac5f0"
+}
