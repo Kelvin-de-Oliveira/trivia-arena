@@ -26,7 +26,7 @@ const normalizePlayers = (players = []) => players.map((player) => ({
 
 const normalizeQuestion = (event) => ({
   ...event,
-  effectiveTimeMs: Number(event.remaining_time_ms ?? event.time_limit_ms ?? 30000),
+  effectiveTimeMs: Number(event.remaining_time_ms ?? event.time_limit_ms ?? 20000),
   receivedAt: Date.now(),
 });
 

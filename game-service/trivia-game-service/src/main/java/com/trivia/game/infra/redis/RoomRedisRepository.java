@@ -139,6 +139,7 @@ public class RoomRedisRepository {
         int answerKeys = before == null ? 20 : before.numQuestions();
         for (int index = 0; index < answerKeys; index++) {
             keys.add(answersKey(roomCode, index));
+            keys.add(answerAttemptsKey(roomCode, index));
             keys.add(finalizerKey(roomCode, index));
         }
         var args = new ArrayList<String>();
@@ -218,6 +219,21 @@ public class RoomRedisRepository {
             return true;
         }
         return false;
+    }
+
+    public boolean recordAnswerAttempt(String roomCode, int questionIdx, String playerId, Instant receivedAt, long ttlSeconds) {
+        String key = answerAttemptsKey(roomCode, questionIdx);
+        Boolean added = redis.opsForHash().putIfAbsent(key, playerId, receivedAt.toString());
+        if (Boolean.TRUE.equals(added)) {
+            redis.expire(key, Duration.ofSeconds(ttlSeconds));
+            return true;
+        }
+        return false;
+    }
+
+    public long answerAttemptCount(String roomCode, int questionIdx) {
+        Long size = redis.opsForHash().size(answerAttemptsKey(roomCode, questionIdx));
+        return size == null ? 0 : size;
     }
 
     public Map<String, Instant> answers(String roomCode, int questionIdx) {
@@ -323,6 +339,7 @@ public class RoomRedisRepository {
     public static String playerMetaKey(String roomCode) { return "room:%s:player-meta".formatted(roomCode); }
     public static String questionsKey(String roomCode) { return "room:%s:questions".formatted(roomCode); }
     public static String answersKey(String roomCode, int index) { return "room:%s:round:%d:answers".formatted(roomCode, index); }
+    public static String answerAttemptsKey(String roomCode, int index) { return "room:%s:round:%d:answer-attempts".formatted(roomCode, index); }
     public static String finalizerKey(String roomCode, int index) { return "room:%s:round:%d:finalizer".formatted(roomCode, index); }
     public static String leaderKey(String roomCode) { return "room:%s:leader".formatted(roomCode); }
     public static String broadcastChannel(String roomCode) { return "room:%s:broadcast".formatted(roomCode); }

@@ -490,7 +490,7 @@ authorization: Bearer {jwt}     ← omitir se anônimo
     "c": "Marte",
     "d": "Vênus"
   },
-  "time_limit_ms": 30000
+  "time_limit_ms": 20000
 }
 ```
 

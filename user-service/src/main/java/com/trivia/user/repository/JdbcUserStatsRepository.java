@@ -34,7 +34,7 @@ public class JdbcUserStatsRepository implements UserStatsRepository {
     public Optional<UserStats> findByUserId(UUID userId) {
         String sql = "SELECT user_id, games_played, games_won, avg_position, avg_points, highest_score " +
                 "FROM user_stats WHERE user_id = ?";
-        return replicaJdbcTemplate.query(sql, STATS_ROW_MAPPER, userId)
+        return primaryJdbcTemplate.query(sql, STATS_ROW_MAPPER, userId)
                 .stream()
                 .findFirst();
     }

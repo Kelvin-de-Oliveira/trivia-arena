@@ -19,7 +19,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 game:
-  question-timeout-ms: ${GAME_QUESTION_TIMEOUT_MS:30000}
+  question-timeout-ms: ${GAME_QUESTION_TIMEOUT_MS:20000}
   room-ttl-seconds: ${GAME_ROOM_TTL_SECONDS:3600}
   leader-lease-ms: ${GAME_LEADER_LEASE_MS:10000}
   recovery-scan-ms: ${GAME_RECOVERY_SCAN_MS:1000}

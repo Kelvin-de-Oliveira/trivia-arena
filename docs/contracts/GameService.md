@@ -284,7 +284,7 @@ O cliente envia respostas para:
     "c": "Marte",
     "d": "Vênus"
   },
-  "time_limit_ms": 30000
+  "time_limit_ms": 20000
 }
 ```
 

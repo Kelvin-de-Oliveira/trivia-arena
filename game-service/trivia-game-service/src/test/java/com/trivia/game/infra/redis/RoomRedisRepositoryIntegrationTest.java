@@ -84,6 +84,18 @@ class RoomRedisRepositoryIntegrationTest {
     }
 
     @Test
+    void countsOnlyTheFirstAnswerAttemptForAPlayer() {
+        String room = "ROOM04";
+        assertTrue(rooms.createRoom(room, new PlayerMeta("creator", "Ana", false), 2, 5, Theme.SCIENCE, 60));
+        Instant first = Instant.parse("2026-06-20T12:00:01Z");
+        Instant second = Instant.parse("2026-06-20T12:00:02Z");
+
+        assertTrue(rooms.recordAnswerAttempt(room, 0, "creator", first, 60));
+        assertFalse(rooms.recordAnswerAttempt(room, 0, "creator", second, 60));
+        assertEquals(1, rooms.answerAttemptCount(room, 0));
+    }
+
+    @Test
     void applyRoundAddsCreditsToPlayerScores() {
         String room = "ROOM03";
         var question = new Question(UUID.randomUUID(), "Question?", "A", "B", "C", "D", "a");

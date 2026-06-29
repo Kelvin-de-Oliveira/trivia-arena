@@ -54,17 +54,15 @@ public class JdbcUserRepository implements UserRepository {
     @Override
     public Optional<User> findByName(String name) {
         String sql = "SELECT id, name, password_hash FROM users WHERE name = ?";
-        return replicaJdbcTemplate.query(sql, USER_ROW_MAPPER, name)
-                .stream()
-                .findFirst();
+        Optional<User> replicaUser = findOne(replicaJdbcTemplate, sql, name);
+        return replicaUser.or(() -> findOne(primaryJdbcTemplate, sql, name));
     }
 
     @Override
     public Optional<User> findById(UUID userId) {
         String sql = "SELECT id, name, password_hash FROM users WHERE id = ?";
-        return replicaJdbcTemplate.query(sql, USER_ROW_MAPPER, userId)
-                .stream()
-                .findFirst();
+        Optional<User> replicaUser = findOne(replicaJdbcTemplate, sql, userId);
+        return replicaUser.or(() -> findOne(primaryJdbcTemplate, sql, userId));
     }
 
     @Override
@@ -86,7 +84,13 @@ public class JdbcUserRepository implements UserRepository {
     @Override
     public boolean existsByName(String name) {
         String sql = "SELECT EXISTS(SELECT 1 FROM users WHERE name = ?)";
-        Boolean result = replicaJdbcTemplate.queryForObject(sql, Boolean.class, name);
+        Boolean result = primaryJdbcTemplate.queryForObject(sql, Boolean.class, name);
         return result != null && result;
+    }
+
+    private Optional<User> findOne(JdbcTemplate jdbcTemplate, String sql, Object argument) {
+        return jdbcTemplate.query(sql, USER_ROW_MAPPER, argument)
+                .stream()
+                .findFirst();
     }
 }
