@@ -1,6 +1,10 @@
-# ─── Perguntas geradas (não commitar) ────────────────────────────────────────
+# ─── arquivos de dev (não commitar) ────────────────────────────────────────
 fetch_questions.py
 test_infra.py
+questions/
+deploy/
+apigateway\plano_dev.md
+
 
 # ─── Variáveis de ambiente ────────────────────────────────────────────────────
 .env
