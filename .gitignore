@@ -3,7 +3,7 @@ fetch_questions.py
 test_infra.py
 questions/
 deploy/
-apigateway\plano_dev.md
+apigateway/plano_dev.md
 
 
 # ─── Variáveis de ambiente ────────────────────────────────────────────────────
