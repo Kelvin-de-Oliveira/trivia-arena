@@ -13,6 +13,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    cors_origins: list[str] = ["http://localhost:5173"]
+
     # Enderecos completos opcionais. Mantem compatibilidade com .env.prod.example.
     game_grpc_address: str | None = None
     user_grpc_address: str | None = None
