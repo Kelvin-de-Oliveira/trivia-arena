@@ -5,7 +5,7 @@ questions/
 deploy/
 apigateway/plano_dev.md
 trivia-arena.pem
-
+test_services.py
 # ─── Variáveis de ambiente ────────────────────────────────────────────────────
 .env
 *.env.dev
