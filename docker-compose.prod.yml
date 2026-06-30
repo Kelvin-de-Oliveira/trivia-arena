@@ -1,3 +1,6 @@
+## para referencia e para subir todos na mesma máquina (mesma rede docker)
+
+
 services:
 
   # ─── Aplicação ────────────────────────────────────────────────────────────────
@@ -29,7 +32,7 @@ services:
     ports:
       - "8080:8080"
       - "9090:9090"
-    env_file: .env.prod
+    env_file: .env
     depends_on:
       redis:
         condition: service_healthy

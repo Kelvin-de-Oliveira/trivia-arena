@@ -4,11 +4,11 @@ test_infra.py
 questions/
 deploy/
 apigateway/plano_dev.md
-
+trivia-arena.pem
 
 # ─── Variáveis de ambiente ────────────────────────────────────────────────────
 .env
-*.env
+*.env.dev
 !.env.example
 
 # ─── Python ───────────────────────────────────────────────────────────────────
