@@ -8,7 +8,7 @@ services:
       - "9091:9091"   # gRPC — acessado pelo Gateway via IP privado
     env_file: .env
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 9091 || exit 1"]
+      test: ["CMD-SHELL", "timeout 1 bash -c 'cat /dev/null > /dev/tcp/localhost/9090' || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
