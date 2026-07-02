@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   const joinAsAnonymous = useCallback((name) => {
     const anonId = user?.isAnonymous && user.playerId
       ? user.playerId
-      : `anon:${crypto.randomUUID()}`;
+      : `anon:${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
     const anonymousUser = {
       playerId: anonId,
       name: normalizePlayerName(name, user?.isAnonymous ? user.name : DEFAULT_GUEST_NAME),
