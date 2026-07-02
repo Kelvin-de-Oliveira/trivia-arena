@@ -14,7 +14,7 @@ services:
   # ── API Gateway (FastAPI) ─────────────────────────────────────────────────
   gateway:
     build:
-      context: ./gateway
+      context: ./apigateway
     container_name: trivia-gateway
     ports:
       - "8000:8000"
