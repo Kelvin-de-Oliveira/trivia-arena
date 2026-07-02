@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { setAuthToken, setOnSessionExpired } from '../api/client';
 import { AuthContext } from './auth-context';
 
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const DEFAULT_GUEST_NAME = 'Visitante';
 
 const normalizePlayerName = (name, fallback = DEFAULT_GUEST_NAME) => {
@@ -33,7 +41,7 @@ export const AuthProvider = ({ children }) => {
   const joinAsAnonymous = useCallback((name) => {
     const anonId = user?.isAnonymous && user.playerId
       ? user.playerId
-      : `anon:${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      : `anon:${generateUUID()}`;
     const anonymousUser = {
       playerId: anonId,
       name: normalizePlayerName(name, user?.isAnonymous ? user.name : DEFAULT_GUEST_NAME),
